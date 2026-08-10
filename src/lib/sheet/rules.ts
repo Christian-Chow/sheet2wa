@@ -2,7 +2,8 @@
 // how labels are translated or which order sections appear in — no other module
 // needs to change.
 
-import type { AmountRow, ParsedSheetData, ReportLine, ReportModel, TeamReportLine, TeamRow } from "./types";
+import type { AmountRow, ParsedSheetData, ReportDate, ReportLine, ReportModel, TeamReportLine, TeamRow } from "./types";
+import { addDays, formatDateHeader, isMonday } from "./utils";
 
 export const COMPANY_NAME = "愛德集團";
 
@@ -77,6 +78,26 @@ function computeCompanyCashTotal(amante: number | null, cashTotal: number | null
   return amante + cashTotal;
 }
 
+/** 總港幣共 = 分隔戶口 (KEI) + 總港幣屬公司共. Computed from our own parts, never from
+ * the sheet's ALL TOTAL — that value is only useful as an optional external check. */
+function computeGrandTotal(separateAccountsTotal: number | null, companyCashTotal: number | null): number | null {
+  if (separateAccountsTotal === null || companyCashTotal === null) return null;
+  return separateAccountsTotal + companyCashTotal;
+}
+
+function toReportDate(date: Date): ReportDate {
+  return { month: date.getMonth() + 1, day: date.getDate() };
+}
+
+/** Yesterday, unless today is Monday — then last Friday, last Saturday, and yesterday (Sunday). */
+function computeCigarSalesDates(today: Date): ReportDate[] {
+  const yesterday = addDays(today, -1);
+  if (isMonday(today)) {
+    return [addDays(today, -3), addDays(today, -2), yesterday].map(toReportDate);
+  }
+  return [toReportDate(yesterday)];
+}
+
 function buildTeamReportLines(teamSales: TeamRow[]): TeamReportLine[] {
   const ordered = reorderByCanonical(teamSales, TEAM_DISPLAY_ORDER);
   const total = sum(ordered);
@@ -93,10 +114,7 @@ function buildReportLines(rows: AmountRow[], map: Record<string, string>): Repor
   return rows.map((row) => ({ label: mapName(map, row.label), amount: row.amount }));
 }
 
-export function buildReportModel(
-  data: ParsedSheetData,
-  today: { month: number; day: number },
-): ReportModel {
+export function buildReportModel(data: ParsedSheetData, today: Date): ReportModel {
   const banks = buildReportLines(data.banks, BANK_NAME_MAP);
   const shopSales = buildReportLines(reorderByCanonical(data.shopSales, SHOP_DISPLAY_ORDER), SHOP_NAME_MAP);
   const teamSales = buildTeamReportLines(data.teamSales);
@@ -105,18 +123,21 @@ export function buildReportModel(
   const monthSalesTotal =
     data.salesTotal ?? (teamSales.length > 0 ? sum(teamSales) : cigarSalesTotal);
 
+  const companyCashTotal = computeCompanyCashTotal(data.amante, data.cashTotal);
+
   return {
+    dateHeader: formatDateHeader(today),
     banks,
     companyCashInAccounts: data.amante,
     cashInVault: data.cashTotal,
-    companyCashTotal: computeCompanyCashTotal(data.amante, data.cashTotal),
+    companyCashTotal,
     separateAccountsTotal: data.kei,
-    extraAccounts: data.extraAccounts.map((row) => ({ label: row.label.trim(), amount: row.amount })),
+    grandTotal: computeGrandTotal(data.kei, companyCashTotal),
     shopSales,
     teamSales,
     cigarSalesTotal,
     monthSalesTotal,
-    month: today.month,
-    day: today.day,
+    month: today.getMonth() + 1,
+    cigarSalesDates: computeCigarSalesDates(today),
   };
 }

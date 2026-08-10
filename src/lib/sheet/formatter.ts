@@ -8,8 +8,12 @@ import { formatCurrency, formatPercent } from "./utils";
 const SEPARATOR = "---";
 const CIGAR_SECTION_DIVIDER = "-----------雪茄銷售---------";
 
+/** Recurring misc accounts that always need a human to check and fill in by hand
+ * before sending, regardless of what the sheet contains. */
+const FIXED_EXTRA_ACCOUNT_LABELS = ["交通", "螞蟻", "上海商業"];
+
 function formatBankBlock(model: ReportModel): string[] {
-  return model.banks.map((bank, i) => `${i + 1}. ${bank.label} : ${formatCurrency(bank.amount)}`);
+  return model.banks.map((bank, i) => `${i + 1}) ${bank.label} : ${formatCurrency(bank.amount)}`);
 }
 
 function formatCompanyCashBlock(model: ReportModel): string[] | null {
@@ -26,12 +30,15 @@ function formatSeparateAccountsBlock(model: ReportModel): string[] | null {
   return [`分隔戶口 : ${formatCurrency(model.separateAccountsTotal)}`];
 }
 
-function formatExtraAccountsBlock(model: ReportModel): string[] | null {
-  if (model.extraAccounts.length === 0) return null;
+function formatGrandTotalBlock(model: ReportModel): string[] | null {
+  if (model.grandTotal === null) return null;
+  return [`總港幣共 : ${formatCurrency(model.grandTotal)}`];
+}
+
+function formatFixedExtraAccountsBlock(model: ReportModel): string[] | null {
+  if (model.grandTotal === null) return null;
   const startIndex = model.banks.length + 1;
-  return model.extraAccounts.map(
-    (account, i) => `${startIndex + i})${account.label} : ${formatCurrency(account.amount)}`,
-  );
+  return FIXED_EXTRA_ACCOUNT_LABELS.map((label, i) => `${startIndex + i})${label} : `);
 }
 
 function formatShopSalesBlock(model: ReportModel): string[] | null {
@@ -53,8 +60,10 @@ function formatTeamSalesBlock(model: ReportModel): string[] | null {
 function formatTotalsBlock(model: ReportModel): string[] | null {
   const lines: string[] = [];
   if (model.shopSales.length > 0) {
-    // Left blank for manual entry: the sheet doesn't carry a distinct "today only" total.
-    lines.push(`[${model.month}月${model.day}號雪茄總業績 : ]`);
+    // Left blank for manual entry: the sheet doesn't carry a distinct per-day total.
+    for (const { month, day } of model.cigarSalesDates) {
+      lines.push(`[${month}月${day}號雪茄總業績 : ]`);
+    }
   }
   if (model.monthSalesTotal !== null) {
     lines.push(`${model.month}月份所有銷售總數 : ${formatCurrency(model.monthSalesTotal)}`);
@@ -63,13 +72,14 @@ function formatTotalsBlock(model: ReportModel): string[] | null {
 }
 
 export function formatWhatsAppMessage(model: ReportModel): string {
-  const blocks: string[][] = [[COMPANY_NAME]];
+  const blocks: string[][] = [[model.dateHeader, COMPANY_NAME]];
 
   for (const block of [
     formatBankBlock(model),
     formatCompanyCashBlock(model),
     formatSeparateAccountsBlock(model),
-    formatExtraAccountsBlock(model),
+    formatGrandTotalBlock(model),
+    formatFixedExtraAccountsBlock(model),
   ]) {
     if (block && block.length > 0) blocks.push(block);
   }

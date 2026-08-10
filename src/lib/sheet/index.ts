@@ -2,7 +2,6 @@ import { formatWhatsAppMessage } from "./formatter";
 import { parseSheet } from "./parser";
 import { buildReportModel } from "./rules";
 import type { GenerateResult, ParsedSheetData } from "./types";
-import { getTodayMonthDay } from "./utils";
 
 function countRecognizedRows(data: ParsedSheetData): number {
   return (
@@ -15,10 +14,7 @@ function countRecognizedRows(data: ParsedSheetData): number {
   );
 }
 
-export function generateWhatsAppMessage(
-  raw: string,
-  today: { month: number; day: number } = getTodayMonthDay(),
-): GenerateResult {
+export function generateWhatsAppMessage(raw: string, today: Date = new Date()): GenerateResult {
   const parsed = parseSheet(raw);
   if (!parsed.ok) {
     return { ok: false, errorCode: parsed.errorCode };

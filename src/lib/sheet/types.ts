@@ -42,20 +42,30 @@ export interface TeamReportLine extends ReportLine {
   percent: number;
 }
 
+/** A calendar date reduced to the fields the report needs to print (e.g. "8月9號"). */
+export interface ReportDate {
+  month: number;
+  day: number;
+}
+
 /** Data after name mapping and business calculations, ready for the formatter. */
 export interface ReportModel {
+  /** e.g. "2026.08.10" */
+  dateHeader: string;
   banks: ReportLine[];
   companyCashInAccounts: number | null;
   cashInVault: number | null;
   companyCashTotal: number | null;
   separateAccountsTotal: number | null;
-  extraAccounts: ReportLine[];
+  /** 總港幣共 = separateAccountsTotal + companyCashTotal. */
+  grandTotal: number | null;
   shopSales: ReportLine[];
   teamSales: TeamReportLine[];
   cigarSalesTotal: number | null;
   monthSalesTotal: number | null;
   month: number;
-  day: number;
+  /** Yesterday, or [last Friday, last Saturday, yesterday] when today is Monday. */
+  cigarSalesDates: ReportDate[];
 }
 
 export type GenerateResult =

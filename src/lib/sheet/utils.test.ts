@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatCurrency, formatPercent, parseNumber } from "./utils";
+import { addDays, formatCurrency, formatDateHeader, formatPercent, isMonday, parseNumber } from "./utils";
 
 describe("parseNumber", () => {
   it("parses plain numbers", () => {
@@ -58,5 +58,28 @@ describe("formatPercent", () => {
     expect(formatPercent(30.7845)).toBe("30.78%");
     expect(formatPercent(53.76321)).toBe("53.76%");
     expect(formatPercent(0.90484)).toBe("0.90%");
+  });
+});
+
+describe("formatDateHeader", () => {
+  it("formats as YYYY.MM.DD with zero-padding", () => {
+    expect(formatDateHeader(new Date(2026, 7, 10))).toBe("2026.08.10");
+    expect(formatDateHeader(new Date(2026, 0, 5))).toBe("2026.01.05");
+  });
+});
+
+describe("addDays", () => {
+  it("adds days across month/year boundaries", () => {
+    expect(formatDateHeader(addDays(new Date(2026, 7, 10), -1))).toBe("2026.08.09");
+    expect(formatDateHeader(addDays(new Date(2026, 7, 1), -1))).toBe("2026.07.31");
+    expect(formatDateHeader(addDays(new Date(2026, 0, 1), -1))).toBe("2025.12.31");
+  });
+});
+
+describe("isMonday", () => {
+  it("identifies Monday 2026-08-10 and rejects other days", () => {
+    expect(isMonday(new Date(2026, 7, 10))).toBe(true);
+    expect(isMonday(new Date(2026, 7, 9))).toBe(false);
+    expect(isMonday(new Date(2026, 7, 11))).toBe(false);
   });
 });

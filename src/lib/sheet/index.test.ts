@@ -35,14 +35,21 @@ const EXAMPLE_INPUT = [
   "SALES TOTAL\t1,734,558.00",
 ].join("\n");
 
+// 2026-08-06 is a Thursday, so cigar sales fall back to a single "yesterday" line.
+const THURSDAY = new Date(2026, 7, 6);
+
 const EXPECTED_MESSAGE = [
-  "愛德集團",
+  "2026.08.06\n愛德集團",
   "",
-  "1. 大新 : $30,059\n2. 匯豐 : $3,717,224.72\n3. 富邦 : $24,348.68",
+  "1) 大新 : $30,059\n2) 匯豐 : $3,717,224.72\n3) 富邦 : $24,348.68",
   "",
   "總港幣現金在戶口屬公司 : $845,580.28\n總港幣現金在保險庫共 : $4,073\n總港幣屬公司共 : $849,653.28",
   "",
   "分隔戶口 : $2,926,052.12",
+  "",
+  "總港幣共 : $3,775,705.4",
+  "",
+  "4)交通 : \n5)螞蟻 : \n6)上海商業 : ",
   "",
   "---",
   "",
@@ -67,43 +74,71 @@ const EXPECTED_MESSAGE = [
     "合和酒店 : $15,695 (0.90%)",
   ].join("\n"),
   "",
-  "[8月6號雪茄總業績 : ]\n8月份所有銷售總數 : $1,734,558",
+  "[8月5號雪茄總業績 : ]\n8月份所有銷售總數 : $1,734,558",
 ].join("\n");
 
 describe("generateWhatsAppMessage", () => {
   it("produces the exact WhatsApp message for the documented example input", () => {
-    const result = generateWhatsAppMessage(EXAMPLE_INPUT, { month: 8, day: 6 });
+    const result = generateWhatsAppMessage(EXAMPLE_INPUT, THURSDAY);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.message).toBe(EXPECTED_MESSAGE);
     expect(result.rowCount).toBe(3 + 8 + 5 + 1 + 1); // banks + shop + team + amante + kei
   });
 
-  it("changes the month/day labels when a different date is passed in", () => {
-    const result = generateWhatsAppMessage(EXAMPLE_INPUT, { month: 3, day: 21 });
+  it("changes the date header, month/day labels, and grand total when a different date is passed in", () => {
+    // 2026-03-21 is a Saturday, so yesterday is 2026-03-20.
+    const result = generateWhatsAppMessage(EXAMPLE_INPUT, new Date(2026, 2, 21));
     expect(result.ok).toBe(true);
     if (!result.ok) return;
+    expect(result.message).toContain("2026.03.21\n愛德集團");
     expect(result.message).toContain("3月份業績");
-    expect(result.message).toContain("[3月21號雪茄總業績 : ]");
+    expect(result.message).toContain("[3月20號雪茄總業績 : ]");
+    expect(result.message).toContain("總港幣共 : $3,775,705.4");
   });
 
-  it("includes optional extra accounts, numbered after the banks, only when present", () => {
+  it("lists last Friday, last Saturday, and yesterday's cigar sales when today is Monday", () => {
+    // 2026-08-10 is a Monday.
+    const result = generateWhatsAppMessage(EXAMPLE_INPUT, new Date(2026, 7, 10));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.message).toContain(
+      "[8月7號雪茄總業績 : ]\n[8月8號雪茄總業績 : ]\n[8月9號雪茄總業績 : ]\n8月份所有銷售總數 : $1,734,558",
+    );
+  });
+
+  it("always lists the fixed misc accounts below 總港幣共, blank for manual filling, regardless of sheet content", () => {
+    const result = generateWhatsAppMessage(EXAMPLE_INPUT, THURSDAY);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.message).toContain("總港幣共 : $3,775,705.4\n\n4)交通 : \n5)螞蟻 : \n6)上海商業 : ");
+
+    // Even if the sheet happens to carry rows with these exact labels, the fixed
+    // block still wins: their amounts are never parsed into it.
     const input = EXAMPLE_INPUT.replace(
       "KEI\t2,926,052.12",
       ["KEI\t2,926,052.12", "交通\t2,996.69", "螞蟻\t615.3", "上海商業\t5,000"].join("\n"),
     );
-    const result = generateWhatsAppMessage(input, { month: 8, day: 6 });
+    const result2 = generateWhatsAppMessage(input, THURSDAY);
+    expect(result2.ok).toBe(true);
+    if (!result2.ok) return;
+    expect(result2.message).toContain("4)交通 : \n5)螞蟻 : \n6)上海商業 : ");
+  });
+
+  it("omits the fixed misc-accounts block when there's no grand total to anchor it to", () => {
+    const input = ["BANK", "Dah Sing\t30,059.00"].join("\n");
+    const result = generateWhatsAppMessage(input, THURSDAY);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.message).toContain("4)交通 : $2,996.69\n5)螞蟻 : $615.3\n6)上海商業 : $5,000");
+    expect(result.message).not.toContain("交通");
   });
 
   it("omits blocks whose underlying data is missing instead of crashing", () => {
     const input = ["BANK", "Dah Sing\t30,059.00"].join("\n");
-    const result = generateWhatsAppMessage(input, { month: 8, day: 6 });
+    const result = generateWhatsAppMessage(input, THURSDAY);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.message).toBe("愛德集團\n\n1. 大新 : $30,059");
+    expect(result.message).toBe("2026.08.06\n愛德集團\n\n1) 大新 : $30,059");
   });
 
   it("returns a validation error for empty input", () => {

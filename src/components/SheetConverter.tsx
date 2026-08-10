@@ -36,7 +36,7 @@ export default function SheetConverter({ t }: { t: Dictionary["converter"] }) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-6 lg:grid-cols-2 wide:gap-8">
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-700">
           <TableIcon className="h-4 w-4 text-slate-400" />

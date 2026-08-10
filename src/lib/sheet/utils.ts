@@ -40,6 +40,19 @@ export function formatPercent(value: number, decimals = 2): string {
   return `${truncated.toFixed(decimals)}%`;
 }
 
-export function getTodayMonthDay(date: Date = new Date()): { month: number; day: number } {
-  return { month: date.getMonth() + 1, day: date.getDate() };
+/** Formats a date as "2026.08.10", using local calendar fields (not UTC). */
+export function formatDateHeader(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}.${month}.${day}`;
+}
+
+/** Adds (or subtracts, for negative values) whole days to a date's local calendar date. */
+export function addDays(date: Date, days: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+export function isMonday(date: Date): boolean {
+  return date.getDay() === 1;
 }
