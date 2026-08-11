@@ -17,26 +17,26 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
       <Header dict={dict.header} lang={lang} />
 
       <main className="flex-1">
-        <section className="mx-auto max-w-4xl px-6 pt-16 pb-10 text-center sm:pt-24 wide:max-w-5xl">
+        <section className="mx-auto max-w-4xl px-6 pt-16 pb-10 text-center sm:pt-24 wide:max-w-5xl ultrawide:max-w-6xl">
           <div className="mx-auto mb-5 inline-flex items-center gap-1.5 rounded-full bg-[#F3F1E4] px-3 py-1 text-xs font-medium text-[#7C744E]">
             <SparklesIcon className="h-3.5 w-3.5" />
             {dict.hero.badge}
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl wide:text-6xl">
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl wide:text-6xl ultrawide:text-7xl">
             {dict.hero.titleLine1}
             <br className="hidden sm:block" /> {dict.hero.titleLine2}
           </h1>
-          <p className="mx-auto mt-5 max-w-xl text-lg text-slate-500 wide:max-w-2xl wide:text-xl">
+          <p className="mx-auto mt-5 max-w-xl text-lg text-slate-500 wide:max-w-2xl wide:text-xl ultrawide:max-w-3xl">
             {dict.hero.subtitle}
           </p>
         </section>
 
-        <section className="mx-auto max-w-5xl px-6 pb-24 wide:max-w-7xl">
+        <section className="mx-auto max-w-5xl px-6 pb-24 wide:max-w-7xl ultrawide:max-w-[1800px]">
           <SheetConverter t={dict.converter} />
         </section>
 
         <section id="how-it-works" className="border-t border-slate-100 bg-white py-20">
-          <div className="mx-auto max-w-5xl px-6 wide:max-w-7xl">
+          <div className="mx-auto max-w-5xl px-6 wide:max-w-7xl ultrawide:max-w-[1800px]">
             <h2 className="text-center text-2xl font-semibold tracking-tight text-slate-900">
               {dict.howItWorksHeading}
             </h2>

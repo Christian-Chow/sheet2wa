@@ -2,6 +2,7 @@
 
 @theme {
   --breakpoint-wide: 1500px;
+  --breakpoint-ultrawide: 2000px;
 }
 
 :root {

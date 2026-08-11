@@ -5,7 +5,7 @@ import type { Dictionary, Locale } from "@/lib/dictionaries";
 export default function Header({ dict, lang }: { dict: Dictionary["header"]; lang: Locale }) {
   return (
     <header className="border-b border-slate-100 bg-white/80 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 wide:max-w-7xl">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3 wide:max-w-7xl ultrawide:max-w-[1800px]">
         <Image
           src="/amante-logo.jpeg"
           alt="Amante"
