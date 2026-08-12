@@ -60,10 +60,12 @@ function formatTeamSalesBlock(model: ReportModel): string[] | null {
 function formatTotalsBlock(model: ReportModel): string[] | null {
   const lines: string[] = [];
   if (model.shopSales.length > 0) {
-    // Left blank for manual entry: the sheet doesn't carry a distinct per-day total.
-    for (const { month, day } of model.cigarSalesDates) {
-      lines.push(`[${month}月${day}號雪茄總業績 : ]`);
-    }
+    model.cigarSalesDates.forEach(({ month, day }, i) => {
+      const total = model.cigarSalesDayTotals[i] ?? null;
+      // Left blank for manual entry when the sheet doesn't carry this day's total.
+      const value = total !== null ? formatCurrency(total) : "";
+      lines.push(`[${month}月${day}號雪茄總業績 : ${value}]`);
+    });
   }
   if (model.monthSalesTotal !== null) {
     lines.push(`${model.month}月份所有銷售總數 : ${formatCurrency(model.monthSalesTotal)}`);

@@ -98,6 +98,14 @@ function computeCigarSalesDates(today: Date): ReportDate[] {
   return [toReportDate(yesterday)];
 }
 
+/** Totals aligned with computeCigarSalesDates: [Friday, Saturday, Sunday] on Monday, else [previous day]. */
+function computeCigarSalesDayTotals(data: ParsedSheetData, today: Date): (number | null)[] {
+  if (isMonday(today)) {
+    return [data.fridayTotalSales, data.saturdayTotalSales, data.sundayTotalSales];
+  }
+  return [data.previousDayTotalSales];
+}
+
 function buildTeamReportLines(teamSales: TeamRow[]): TeamReportLine[] {
   const ordered = reorderByCanonical(teamSales, TEAM_DISPLAY_ORDER);
   const total = sum(ordered);
@@ -139,5 +147,6 @@ export function buildReportModel(data: ParsedSheetData, today: Date): ReportMode
     monthSalesTotal,
     month: today.getMonth() + 1,
     cigarSalesDates: computeCigarSalesDates(today),
+    cigarSalesDayTotals: computeCigarSalesDayTotals(data, today),
   };
 }

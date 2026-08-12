@@ -25,6 +25,10 @@ export interface ParsedSheetData {
   shopSales: AmountRow[];
   teamSales: TeamRow[];
   salesTotal: number | null;
+  fridayTotalSales: number | null;
+  saturdayTotalSales: number | null;
+  sundayTotalSales: number | null;
+  previousDayTotalSales: number | null;
 }
 
 export type ParseErrorCode = "EMPTY_INPUT" | "NO_RECOGNIZABLE_DATA";
@@ -66,6 +70,8 @@ export interface ReportModel {
   month: number;
   /** Yesterday, or [last Friday, last Saturday, yesterday] when today is Monday. */
   cigarSalesDates: ReportDate[];
+  /** Totals aligned index-for-index with cigarSalesDates; null where the sheet didn't carry a value. */
+  cigarSalesDayTotals: (number | null)[];
 }
 
 export type GenerateResult =

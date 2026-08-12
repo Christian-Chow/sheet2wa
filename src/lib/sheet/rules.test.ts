@@ -14,6 +14,10 @@ function baseData(overrides: Partial<ParsedSheetData> = {}): ParsedSheetData {
     shopSales: [],
     teamSales: [],
     salesTotal: null,
+    fridayTotalSales: null,
+    saturdayTotalSales: null,
+    sundayTotalSales: null,
+    previousDayTotalSales: null,
     ...overrides,
   };
 }

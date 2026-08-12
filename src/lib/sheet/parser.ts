@@ -46,6 +46,10 @@ export function parseSheet(raw: string): ParseResult {
     shopSales: [],
     teamSales: [],
     salesTotal: null,
+    fridayTotalSales: null,
+    saturdayTotalSales: null,
+    sundayTotalSales: null,
+    previousDayTotalSales: null,
   };
 
   let section: Section = "NONE";
@@ -88,6 +92,22 @@ export function parseSheet(raw: string): ParseResult {
     if (key === "SALES TOTAL") {
       data.salesTotal = parseNumber(cells[1]);
       section = "NONE";
+      continue;
+    }
+    if (key === "FRIDAY TOTAL SALES") {
+      data.fridayTotalSales = parseNumber(cells[1]);
+      continue;
+    }
+    if (key === "SATURDAY TOTAL SALES") {
+      data.saturdayTotalSales = parseNumber(cells[1]);
+      continue;
+    }
+    if (key === "SUNDAY TOTAL SALES") {
+      data.sundayTotalSales = parseNumber(cells[1]);
+      continue;
+    }
+    if (key === "PREVIOUS DAY TOTAL SALES") {
+      data.previousDayTotalSales = parseNumber(cells[1]);
       continue;
     }
 
