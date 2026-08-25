@@ -11,6 +11,11 @@ export const zh: typeof en = {
     subtitle: "从表格中复制一个区域，粘贴到下方，即可生成格式规范、可直接发送的消息——无需手动整理。",
   },
   converter: {
+    reportTypeLabel: "报表类型",
+    reportTypes: {
+      bank: "日结表",
+      sales: "小白表",
+    },
     step1Title: "1. 粘贴 Google 表格数据",
     pastePlaceholder: "在 Google 表格中选中一个区域并复制（Cmd/Ctrl+C），然后粘贴到这里（Cmd/Ctrl+V）…",
     generateButton: "生成消息",

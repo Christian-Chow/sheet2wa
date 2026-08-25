@@ -2,19 +2,30 @@
 
 import { useState } from "react";
 import { AlertIcon, CheckIcon, ClipboardIcon, TableIcon } from "./icons";
-import { buildWhatsAppMessage } from "@/lib/transform";
+import { buildWhatsAppMessage, type ReportType } from "@/lib/transform";
 import { format } from "@/lib/format";
 import type { Dictionary } from "@/lib/dictionaries";
 
+const REPORT_TYPES: ReportType[] = ["bank", "sales"];
+
 export default function SheetConverter({ t }: { t: Dictionary["converter"] }) {
+  const [reportType, setReportType] = useState<ReportType>("bank");
   const [raw, setRaw] = useState("");
   const [message, setMessage] = useState("");
   const [rowCount, setRowCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const handleReportTypeChange = (type: ReportType) => {
+    setReportType(type);
+    setMessage("");
+    setRowCount(0);
+    setError(null);
+    setCopied(false);
+  };
+
   const handleGenerate = () => {
-    const result = buildWhatsAppMessage(raw);
+    const result = buildWhatsAppMessage(raw, reportType);
     if (!result.ok) {
       setMessage("");
       setRowCount(0);
@@ -36,72 +47,94 @@ export default function SheetConverter({ t }: { t: Dictionary["converter"] }) {
   };
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2 wide:gap-8">
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-700">
-          <TableIcon className="h-4 w-4 text-slate-400" />
-          {t.step1Title}
+    <div>
+      <div className="mb-6 flex flex-col items-center gap-2">
+        <span className="text-xs font-medium text-slate-400">{t.reportTypeLabel}</span>
+        <div className="inline-flex rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+          {REPORT_TYPES.map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => handleReportTypeChange(type)}
+              className={`rounded-full px-5 py-2 text-sm font-semibold transition-colors ${
+                reportType === type
+                  ? "bg-gradient-to-r from-[#BFB378] to-[#998F60] text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {t.reportTypes[type]}
+            </button>
+          ))}
         </div>
-        <textarea
-          value={raw}
-          onChange={(e) => setRaw(e.target.value)}
-          placeholder={t.pastePlaceholder}
-          rows={12}
-          className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#BFB378] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#BFB378]/20"
-        />
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={!raw.trim()}
-          className="mt-4 w-full rounded-full bg-gradient-to-r from-[#BFB378] to-[#998F60] px-8 py-3 text-sm font-semibold text-white shadow-md shadow-[#BFB378]/20 transition-transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
-        >
-          {t.generateButton}
-        </button>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <ClipboardIcon className="h-4 w-4 text-slate-400" />
-            {t.step2Title}
+      <div className="grid gap-6 lg:grid-cols-2 wide:gap-8">
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center gap-2 text-sm font-medium text-slate-700">
+            <TableIcon className="h-4 w-4 text-slate-400" />
+            {t.step1Title}
           </div>
-          {rowCount > 0 && (
-            <span className="rounded-full bg-[#F3F1E4] px-2.5 py-0.5 text-xs font-medium text-[#7C744E]">
-              {format(rowCount === 1 ? t.rowCount.one : t.rowCount.other, { count: rowCount })}
-            </span>
-          )}
+          <textarea
+            value={raw}
+            onChange={(e) => setRaw(e.target.value)}
+            placeholder={t.pastePlaceholder}
+            rows={12}
+            className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#BFB378] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#BFB378]/20"
+          />
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={!raw.trim()}
+            className="mt-4 w-full rounded-full bg-gradient-to-r from-[#BFB378] to-[#998F60] px-8 py-3 text-sm font-semibold text-white shadow-md shadow-[#BFB378]/20 transition-transform hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+          >
+            {t.generateButton}
+          </button>
         </div>
-        {error && (
-          <div className="mb-4 flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-            <AlertIcon className="mt-0.5 h-4 w-4 flex-shrink-0" />
-            <span>{error}</span>
+
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <ClipboardIcon className="h-4 w-4 text-slate-400" />
+              {t.step2Title}
+            </div>
+            {rowCount > 0 && (
+              <span className="rounded-full bg-[#F3F1E4] px-2.5 py-0.5 text-xs font-medium text-[#7C744E]">
+                {format(rowCount === 1 ? t.rowCount.one : t.rowCount.other, { count: rowCount })}
+              </span>
+            )}
           </div>
-        )}
-        <textarea
-          value={message}
-          readOnly
-          placeholder={t.outputPlaceholder}
-          rows={12}
-          className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
-        />
-        <button
-          type="button"
-          onClick={handleCopy}
-          disabled={!message}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-8 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-[#BFB378] hover:text-[#998F60] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:text-slate-700"
-        >
-          {copied ? (
-            <>
-              <CheckIcon className="h-4 w-4 text-emerald-600" />
-              {t.copiedButton}
-            </>
-          ) : (
-            <>
-              <ClipboardIcon className="h-4 w-4" />
-              {t.copyButton}
-            </>
+          {error && (
+            <div className="mb-4 flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              <AlertIcon className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
           )}
-        </button>
+          <textarea
+            value={message}
+            readOnly
+            placeholder={t.outputPlaceholder}
+            rows={12}
+            className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={handleCopy}
+            disabled={!message}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-8 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-[#BFB378] hover:text-[#998F60] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-slate-200 disabled:hover:text-slate-700"
+          >
+            {copied ? (
+              <>
+                <CheckIcon className="h-4 w-4 text-emerald-600" />
+                {t.copiedButton}
+              </>
+            ) : (
+              <>
+                <ClipboardIcon className="h-4 w-4" />
+                {t.copyButton}
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

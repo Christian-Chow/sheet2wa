@@ -10,6 +10,11 @@ export const en = {
       "Copy a range from your spreadsheet, paste it below, and get a perfectly formatted message ready to send — no manual retyping.",
   },
   converter: {
+    reportTypeLabel: "Report type",
+    reportTypes: {
+      bank: "Daily Settlement",
+      sales: "Sales Report",
+    },
     step1Title: "1. Paste your Google Sheets range",
     pastePlaceholder:
       "Select a range in Google Sheets, copy it (Cmd/Ctrl+C), then paste here (Cmd/Ctrl+V)…",

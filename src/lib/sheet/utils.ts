@@ -1,5 +1,20 @@
 // Number, currency, percentage, and date formatting helpers.
 
+/** Splits a pasted spreadsheet row into cells: tab-separated first, falling back
+ * to runs of 2+ spaces (for content pasted as plain text instead of TSV). */
+export function splitRow(line: string): string[] {
+  if (line.includes("\t")) return line.split("\t");
+  const multiSpace = line.split(/ {2,}/);
+  if (multiSpace.length > 1) return multiSpace;
+  return [line];
+}
+
+/** Collapses internal whitespace and uppercases, so section-label matching is
+ * tolerant of stray spaces and case (Chinese labels are unaffected by uppercasing). */
+export function normalizeLabel(s: string): string {
+  return s.replace(/\s+/g, " ").trim().toUpperCase();
+}
+
 /** Parses a cell value that may contain "$", commas, "%", or stray whitespace. */
 export function parseNumber(raw: string | undefined | null): number | null {
   if (raw == null) return null;

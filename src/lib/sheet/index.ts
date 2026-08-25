@@ -1,6 +1,7 @@
 import { formatWhatsAppMessage } from "./formatter";
 import { parseSheet } from "./parser";
 import { buildReportModel } from "./rules";
+import { generateSalesReportMessage, SALES_REPORT_MARKER } from "./salesReport";
 import type { GenerateResult, ParsedSheetData } from "./types";
 
 function countRecognizedRows(data: ParsedSheetData): number {
@@ -14,7 +15,21 @@ function countRecognizedRows(data: ParsedSheetData): number {
   );
 }
 
-export function generateWhatsAppMessage(raw: string, today: Date = new Date()): GenerateResult {
+/** "bank" is the original bank/cash/shop/team-sales daily report; "sales" is the
+ * invoice-based 【銷售數據】 report (nicknamed 小白表). */
+export type ReportType = "bank" | "sales";
+
+export function generateWhatsAppMessage(
+  raw: string,
+  today: Date = new Date(),
+  reportType?: ReportType,
+): GenerateResult {
+  const type = reportType ?? (raw.trim().startsWith(SALES_REPORT_MARKER) ? "sales" : "bank");
+
+  if (type === "sales") {
+    return generateSalesReportMessage(raw);
+  }
+
   const parsed = parseSheet(raw);
   if (!parsed.ok) {
     return { ok: false, errorCode: parsed.errorCode };
@@ -30,3 +45,4 @@ export * from "./types";
 export { parseSheet } from "./parser";
 export { buildReportModel } from "./rules";
 export { formatWhatsAppMessage } from "./formatter";
+export * from "./salesReport";

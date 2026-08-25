@@ -2,21 +2,10 @@
 // their labels (not fixed row numbers) so it keeps working if rows are inserted,
 // reordered, or a section is missing entirely.
 
-import { parseNumber } from "./utils";
+import { normalizeLabel, parseNumber, splitRow } from "./utils";
 import type { AmountRow, ParsedSheetData, ParseResult } from "./types";
 
 type Section = "NONE" | "BANK" | "SEPARATE_ACCOUNTS" | "SHOP_SALES" | "TEAM_SALES";
-
-function splitRow(line: string): string[] {
-  if (line.includes("\t")) return line.split("\t");
-  const multiSpace = line.split(/ {2,}/);
-  if (multiSpace.length > 1) return multiSpace;
-  return [line];
-}
-
-function normalizeLabel(s: string): string {
-  return s.replace(/\s+/g, " ").trim().toUpperCase();
-}
 
 /** Team rows (e.g. "OSCAR TEAM") are recognized by label rather than a required heading,
  * since real sheets don't always include an explicit "TEAM SALES" section row. */

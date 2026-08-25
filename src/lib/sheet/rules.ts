@@ -43,13 +43,13 @@ export const TEAM_DISPLAY_ORDER = [
   "NIKI TEAM",
 ];
 
-function mapName(map: Record<string, string>, rawLabel: string): string {
+export function mapName(map: Record<string, string>, rawLabel: string): string {
   const trimmed = rawLabel.trim();
   const entry = Object.entries(map).find(([key]) => key.toUpperCase() === trimmed.toUpperCase());
   return entry ? entry[1] : trimmed;
 }
 
-function reorderByCanonical<T extends { label: string }>(items: T[], canonicalOrder: string[]): T[] {
+export function reorderByCanonical<T extends { label: string }>(items: T[], canonicalOrder: string[]): T[] {
   const byKey = new Map(items.map((item) => [item.label.trim().toUpperCase(), item] as const));
   const used = new Set<string>();
   const ordered: T[] = [];
