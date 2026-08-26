@@ -50,13 +50,17 @@ const EXPECTED_MESSAGE = [
   "💰 總計： $7,642,593 (26)",
   "_________",
   "【供應商詳情】",
+  "",
   "> PCC批發 (總數：$42,061)",
   " 盒 x 4 | 散 x 14",
+  "",
   "> PCC零售 (總數：$22,391)",
   " 盒 x 4",
+  "",
   "> 其他供應商 (總數：$371,213)",
   "* [ 任和其他供應商 ]  盒 x 17",
   "* [ BHK ]  盒 x 3",
+  "",
   "> 小伍哥 (總數：-$20,000)",
   "-退貨-  ( BHK 52 x 1 盒 )",
   "_________",
@@ -89,5 +93,81 @@ describe("generateWhatsAppMessage (sales report)", () => {
   it("returns NO_RECOGNIZABLE_DATA when the marker is present but nothing parses", () => {
     const result = generateWhatsAppMessage("【銷售數據】\n25/8/2026");
     expect(result).toEqual({ ok: false, errorCode: "NO_RECOGNIZABLE_DATA" });
+  });
+
+  it("treats a '> Non-Cuban cigars' row as the section marker, not a supplier group", () => {
+    const input = [
+      "【銷售數據】",
+      "25/8/2026",
+      "",
+      "HQ\t100\t1",
+      "",
+      "Total\t100",
+      "_________",
+      "SUPPLIER DETAILS\tTOTAL\tBox\tPack\tStick\tRefund (T/F)",
+      "> PCC Wholesales \t42061\t4\t14",
+      "_________",
+      "> Non-Cuban cigars",
+      "哥倫布 小雪茄 5支 \t\t\t6",
+    ].join("\n");
+    const result = generateWhatsAppMessage(input);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.message).toBe(
+      [
+        "【銷售數據】",
+        "25/8/2026",
+        "",
+        "總部 $100 (1)",
+        "",
+        "💰 總計： $100 (1)",
+        "_________",
+        "【供應商詳情】",
+        "",
+        "> PCC批發 (總數：$42,061)",
+        " 盒 x 4 | 散 x 14",
+        "_________",
+        "【非古雪茄】",
+        "哥倫布 小雪茄 5支 x 6 包",
+      ].join("\n"),
+    );
+  });
+
+  it("treats a '> 配件' row as the section marker, not a supplier group", () => {
+    const input = [
+      "【銷售數據】",
+      "25/8/2026",
+      "",
+      "HQ\t100\t1",
+      "",
+      "Total\t100",
+      "_________",
+      "SUPPLIER DETAILS\tTOTAL\tBox\tPack\tStick\tRefund (T/F)",
+      "> PCC Wholesales \t42061\t4\t14",
+      "_________",
+      "> 配件",
+      "雪茄剪 \t\t\t3",
+    ].join("\n");
+    const result = generateWhatsAppMessage(input);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.message).toBe(
+      [
+        "【銷售數據】",
+        "25/8/2026",
+        "",
+        "總部 $100 (1)",
+        "",
+        "💰 總計： $100 (1)",
+        "_________",
+        "【供應商詳情】",
+        "",
+        "> PCC批發 (總數：$42,061)",
+        " 盒 x 4 | 散 x 14",
+        "_________",
+        "【配件】",
+        "雪茄剪 x 3 包",
+      ].join("\n"),
+    );
   });
 });

@@ -10,6 +10,7 @@ import {
   orderShops,
   SUPPLIER_UNITS,
   FREE_GIFT_UNITS,
+  ACCESSORY_UNITS,
 } from "./rules";
 import type {
   ParsedSalesReportData,
@@ -90,7 +91,7 @@ export function formatSalesReportMessage(data: ParsedSalesReportData): string {
     lines.push(
       SEPARATOR,
       "【供應商詳情】",
-      ...data.supplierGroups.flatMap(formatSupplierGroup),
+      ...data.supplierGroups.flatMap((group) => ["", ...formatSupplierGroup(group)]),
     );
   }
 
@@ -109,6 +110,14 @@ export function formatSalesReportMessage(data: ParsedSalesReportData): string {
       ...data.freeGifts.map((row) =>
         formatQuantityRow(row, isCoffeeCupItem(row.label) ? NO_UNITS : FREE_GIFT_UNITS),
       ),
+    );
+  }
+
+  if (data.accessories.length > 0) {
+    lines.push(
+      SEPARATOR,
+      "【配件】",
+      ...data.accessories.map((row) => formatQuantityRow(row, ACCESSORY_UNITS)),
     );
   }
 

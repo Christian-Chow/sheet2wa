@@ -39,4 +39,5 @@ export interface ParsedSalesReportData {
   supplierGroups: SalesReportSupplierGroup[];
   nonCubanCigars: QuantityRow[];
   freeGifts: QuantityRow[];
+  accessories: QuantityRow[];
 }

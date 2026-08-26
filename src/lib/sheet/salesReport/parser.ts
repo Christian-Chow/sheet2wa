@@ -11,7 +11,7 @@ import type { ParsedSalesReportData, QuantityRow, SalesReportSupplierGroup } fro
 
 export const SALES_REPORT_MARKER = "【銷售數據】";
 
-type Section = "NONE" | "AWAITING_DATE" | "SHOPS" | "SUPPLIER" | "NON_CUBAN" | "FREE_GIFT";
+type Section = "NONE" | "AWAITING_DATE" | "SHOPS" | "SUPPLIER" | "NON_CUBAN" | "FREE_GIFT" | "ACCESSORIES";
 
 function isDivider(label: string): boolean {
   return /^_+$/.test(label.trim());
@@ -39,6 +39,7 @@ export function parseSalesReport(raw: string): ParsedSalesReportData {
     supplierGroups: [],
     nonCubanCigars: [],
     freeGifts: [],
+    accessories: [],
   };
 
   let section: Section = "NONE";
@@ -48,6 +49,10 @@ export function parseSalesReport(raw: string): ParsedSalesReportData {
     const label = (cells[0] ?? "").trim();
     if (!label) continue;
     const key = normalizeLabel(label);
+    // Section markers are matched with any leading "> " stripped, since a sheet
+    // may prefix "Non-Cuban cigars" the same way it prefixes supplier rows —
+    // otherwise it would be swallowed as a supplier group instead of switching sections.
+    const sectionKey = normalizeLabel(label.replace(/^>\s*/, ""));
 
     if (key === SALES_REPORT_MARKER) {
       section = "AWAITING_DATE";
@@ -58,17 +63,21 @@ export function parseSalesReport(raw: string): ParsedSalesReportData {
       section = "SHOPS";
       continue;
     }
-    if (key === "SUPPLIER DETAILS") {
+    if (sectionKey === "SUPPLIER DETAILS") {
       section = "SUPPLIER";
       currentGroup = null;
       continue;
     }
-    if (key === "NON-CUBAN CIGARS") {
+    if (sectionKey === "NON-CUBAN CIGARS") {
       section = "NON_CUBAN";
       continue;
     }
-    if (key === "FREE GIFT") {
+    if (sectionKey === "FREE GIFT") {
       section = "FREE_GIFT";
+      continue;
+    }
+    if (sectionKey === "配件") {
+      section = "ACCESSORIES";
       continue;
     }
     if (isDivider(label)) {
@@ -114,6 +123,9 @@ export function parseSalesReport(raw: string): ParsedSalesReportData {
         break;
       case "FREE_GIFT":
         data.freeGifts.push(parseQuantityRow(cells));
+        break;
+      case "ACCESSORIES":
+        data.accessories.push(parseQuantityRow(cells));
         break;
       case "NONE":
         break;

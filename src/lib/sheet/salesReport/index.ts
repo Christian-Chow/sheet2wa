@@ -13,7 +13,8 @@ function countRecognizedRows(data: ParsedSalesReportData): number {
     data.shops.length +
     data.supplierGroups.reduce((sum, g) => sum + 1 + g.items.length, 0) +
     data.nonCubanCigars.length +
-    data.freeGifts.length
+    data.freeGifts.length +
+    data.accessories.length
   );
 }
 

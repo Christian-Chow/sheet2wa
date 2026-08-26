@@ -19,6 +19,7 @@ export interface UnitWords {
 export const SUPPLIER_UNITS: UnitWords = { box: "盒", pack: "散", stick: "支" };
 export const NON_CUBAN_UNITS: UnitWords = { box: "盒", pack: "包", stick: "支" };
 export const FREE_GIFT_UNITS: UnitWords = { box: "盒", pack: "包", stick: "支" };
+export const ACCESSORY_UNITS: UnitWords = { box: "盒", pack: "包", stick: "支" };
 export const NO_UNITS: UnitWords = { box: "", pack: "", stick: "" };
 
 /** Coffee cups are counted as loose items, not cigars — they don't take a unit word. */
