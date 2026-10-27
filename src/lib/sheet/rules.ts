@@ -28,20 +28,19 @@ export const TEAM_NAME_MAP: Record<string, string> = {
   "HQ TEAM": "總部",
   "OSCAR TEAM": "奧斯卡團隊",
   "VINCENT TEAM": "溫信團隊",
-  "JONATHAN TEAM": "港島南岸+合和中心",
-  "NIKI TEAM": "合和酒店",
+  "JONATHAN TEAM": "港島南岸+合和中心+合和酒店",
+};
+
+/** Teams whose sales are folded into another team before display (source -> target).
+ * Kept so older sheets that still list NIKI TEAM separately roll up correctly. */
+export const TEAM_MERGE_MAP: Record<string, string> = {
+  "NIKI TEAM": "JONATHAN TEAM",
 };
 
 /** Canonical display order for shops/teams. Anything in the data but not listed here
  * is appended at the end, in the order it appeared in the sheet. */
 export const SHOP_DISPLAY_ORDER = ["HQ", "PP", "EMS", "OC", "K11", "SS", "HW", "HWH"];
-export const TEAM_DISPLAY_ORDER = [
-  "HQ TEAM",
-  "OSCAR TEAM",
-  "VINCENT TEAM",
-  "JONATHAN TEAM",
-  "NIKI TEAM",
-];
+export const TEAM_DISPLAY_ORDER = ["HQ TEAM", "OSCAR TEAM", "VINCENT TEAM", "JONATHAN TEAM"];
 
 export function mapName(map: Record<string, string>, rawLabel: string): string {
   const trimmed = rawLabel.trim();
@@ -106,8 +105,31 @@ function computeCigarSalesDayTotals(data: ParsedSheetData, today: Date): (number
   return [data.previousDayTotalSales];
 }
 
+/** Folds each TEAM_MERGE_MAP source row into its target row (adding amounts and sheet
+ * percentages). If the target is missing, the source row takes its place. */
+function mergeTeams(teamSales: TeamRow[]): TeamRow[] {
+  const merged: TeamRow[] = [];
+  const byKey = new Map<string, TeamRow>();
+  for (const team of teamSales) {
+    const rawKey = team.label.trim().toUpperCase();
+    const target = Object.entries(TEAM_MERGE_MAP).find(([source]) => source.toUpperCase() === rawKey)?.[1];
+    const key = (target ?? team.label).trim().toUpperCase();
+    const existing = byKey.get(key);
+    if (existing) {
+      existing.amount += team.amount;
+      existing.percent =
+        existing.percent !== null && team.percent !== null ? existing.percent + team.percent : null;
+    } else {
+      const row = { ...team, label: target ?? team.label };
+      byKey.set(key, row);
+      merged.push(row);
+    }
+  }
+  return merged;
+}
+
 function buildTeamReportLines(teamSales: TeamRow[]): TeamReportLine[] {
-  const ordered = reorderByCanonical(teamSales, TEAM_DISPLAY_ORDER);
+  const ordered = reorderByCanonical(mergeTeams(teamSales), TEAM_DISPLAY_ORDER);
   const total = sum(ordered);
   return ordered.map((team) => ({
     label: mapName(TEAM_NAME_MAP, team.label),

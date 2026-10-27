@@ -5,7 +5,7 @@ import { COMPANY_NAME } from "./rules";
 import type { ReportModel } from "./types";
 import { formatCurrency, formatPercent } from "./utils";
 
-const SEPARATOR = "---";
+const SEPARATOR = "____________";
 const CIGAR_SECTION_DIVIDER = "-----------雪茄銷售---------";
 
 /** Recurring misc accounts that always need a human to check and fill in by hand
@@ -38,7 +38,7 @@ function formatGrandTotalBlock(model: ReportModel): string[] | null {
 function formatFixedExtraAccountsBlock(model: ReportModel): string[] | null {
   if (model.grandTotal === null) return null;
   const startIndex = model.banks.length + 1;
-  return FIXED_EXTRA_ACCOUNT_LABELS.map((label, i) => `${startIndex + i})${label} : `);
+  return FIXED_EXTRA_ACCOUNT_LABELS.map((label, i) => `${startIndex + i}) ${label} : `);
 }
 
 function formatShopSalesBlock(model: ReportModel): string[] | null {

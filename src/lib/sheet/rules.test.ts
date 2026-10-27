@@ -67,6 +67,22 @@ describe("buildReportModel", () => {
     expect(model.teamSales[0].percent).toBeCloseTo(30.7845, 5);
   });
 
+  it("merges a legacy NIKI TEAM row (合和酒店) into JONATHAN TEAM", () => {
+    const model = buildReportModel(
+      baseData({
+        teamSales: [
+          { label: "OSCAR TEAM", amount: 533975, percent: 30.7845 },
+          { label: "JONATHAN TEAM", amount: 252334, percent: 14.54745 },
+          { label: "NIKI TEAM", amount: 15695, percent: 0.90484 },
+        ],
+      }),
+      new Date(2026, 7, 6),
+    );
+    expect(model.teamSales.map((t) => t.label)).toEqual(["奧斯卡團隊", "港島南岸+合和中心+合和酒店"]);
+    expect(model.teamSales[1].amount).toBe(268029);
+    expect(model.teamSales[1].percent).toBeCloseTo(15.45229, 5);
+  });
+
   it("computes team percentage from totals when the sheet has no percentage column", () => {
     const model = buildReportModel(
       baseData({

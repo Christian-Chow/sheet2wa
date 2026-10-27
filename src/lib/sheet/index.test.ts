@@ -29,8 +29,7 @@ const EXAMPLE_INPUT = [
   "HQ TEAM\t0.00\t0.00000%",
   "OSCAR TEAM\t533,975.00\t30.78450%",
   "VINCENT TEAM\t932,554.00\t53.76321%",
-  "JONATHAN TEAM\t252,334.00\t14.54745%",
-  "NIKI TEAM\t15,695.00\t0.90484%",
+  "JONATHAN TEAM\t268,029.00\t15.45229%",
   "",
   "SALES TOTAL\t1,734,558.00",
 ].join("\n");
@@ -49,9 +48,9 @@ const EXPECTED_MESSAGE = [
   "",
   "總港幣共 : $3,775,705.4",
   "",
-  "4)交通 : \n5)螞蟻 : \n6)上海商業 : ",
+  "4) 交通 : \n5) 螞蟻 : \n6) 上海商業 : ",
   "",
-  "---",
+  "____________",
   "",
   [
     "8月份業績",
@@ -70,8 +69,7 @@ const EXPECTED_MESSAGE = [
     "總部 : $0 (0%)",
     "奧斯卡團隊 : $533,975 (30.78%)",
     "溫信團隊 : $932,554 (53.76%)",
-    "港島南岸+合和中心 : $252,334 (14.54%)",
-    "合和酒店 : $15,695 (0.90%)",
+    "港島南岸+合和中心+合和酒店 : $268,029 (15.45%)",
   ].join("\n"),
   "",
   "[8月5號雪茄總業績 : ]\n8月份所有銷售總數 : $1,734,558",
@@ -83,7 +81,7 @@ describe("generateWhatsAppMessage", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.message).toBe(EXPECTED_MESSAGE);
-    expect(result.rowCount).toBe(3 + 8 + 5 + 1 + 1); // banks + shop + team + amante + kei
+    expect(result.rowCount).toBe(3 + 8 + 4 + 1 + 1); // banks + shop + team + amante + kei
   });
 
   it("changes the date header, month/day labels, and grand total when a different date is passed in", () => {
@@ -111,7 +109,7 @@ describe("generateWhatsAppMessage", () => {
     const result = generateWhatsAppMessage(EXAMPLE_INPUT, THURSDAY);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.message).toContain("總港幣共 : $3,775,705.4\n\n4)交通 : \n5)螞蟻 : \n6)上海商業 : ");
+    expect(result.message).toContain("總港幣共 : $3,775,705.4\n\n4) 交通 : \n5) 螞蟻 : \n6) 上海商業 : ");
 
     // Even if the sheet happens to carry rows with these exact labels, the fixed
     // block still wins: their amounts are never parsed into it.
@@ -122,7 +120,7 @@ describe("generateWhatsAppMessage", () => {
     const result2 = generateWhatsAppMessage(input, THURSDAY);
     expect(result2.ok).toBe(true);
     if (!result2.ok) return;
-    expect(result2.message).toContain("4)交通 : \n5)螞蟻 : \n6)上海商業 : ");
+    expect(result2.message).toContain("4) 交通 : \n5) 螞蟻 : \n6) 上海商業 : ");
   });
 
   it("omits the fixed misc-accounts block when there's no grand total to anchor it to", () => {
