@@ -14,13 +14,11 @@ export interface TeamRow {
 
 /** Structured data straight out of the parser, before name mapping or business rules are applied. */
 export interface ParsedSheetData {
+  /** Rows under the AMANTE BANK heading, in sheet order — includes the CASH (vault) row. */
   banks: AmountRow[];
   bankTotal: number | null;
-  cashTotal: number | null;
-  amante: number | null;
-  kei: number | null;
-  /** Extra rows found under SEPARATE ACCOUNTS beyond AMANTE / KEI (e.g. 交通, 螞蟻). */
-  extraAccounts: AmountRow[];
+  /** Rows under SEPARATE ACCOUNTS (e.g. Fubon). */
+  separateAccounts: AmountRow[];
   allTotal: number | null;
   shopSales: AmountRow[];
   teamSales: TeamRow[];
@@ -57,12 +55,11 @@ export interface ReportModel {
   /** e.g. "2026.08.10" */
   dateHeader: string;
   banks: ReportLine[];
-  companyCashInAccounts: number | null;
-  cashInVault: number | null;
+  /** 總港幣屬公司共 = sum of the bank rows (incl. vault cash); null when there are none. */
   companyCashTotal: number | null;
+  separateAccounts: ReportLine[];
+  /** 總港幣屬分隔戶口共 = sum of the separate accounts; null when there are none. */
   separateAccountsTotal: number | null;
-  /** 總港幣共 = separateAccountsTotal + companyCashTotal. */
-  grandTotal: number | null;
   shopSales: ReportLine[];
   teamSales: TeamReportLine[];
   cigarSalesTotal: number | null;

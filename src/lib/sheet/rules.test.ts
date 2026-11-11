@@ -6,10 +6,7 @@ function baseData(overrides: Partial<ParsedSheetData> = {}): ParsedSheetData {
   return {
     banks: [],
     bankTotal: null,
-    cashTotal: null,
-    amante: null,
-    kei: null,
-    extraAccounts: [],
+    separateAccounts: [],
     allTotal: null,
     shopSales: [],
     teamSales: [],
@@ -34,14 +31,39 @@ describe("buildReportModel", () => {
     ]);
   });
 
-  it("computes company cash as AMANTE + CASH TOTAL", () => {
-    const model = buildReportModel(baseData({ amante: 845580.28, cashTotal: 4073 }), new Date(2026, 7, 6));
-    expect(model.companyCashTotal).toBeCloseTo(849653.28, 5);
+  it("maps the CASH row to the vault label", () => {
+    const model = buildReportModel(baseData({ banks: [{ label: "CASH", amount: 1 }] }), new Date(2026, 7, 6));
+    expect(model.banks).toEqual([{ label: "保險庫 (現金)", amount: 1 }]);
   });
 
-  it("leaves the company cash total null when either input is missing", () => {
-    const model = buildReportModel(baseData({ amante: 845580.28, cashTotal: null }), new Date(2026, 7, 6));
+  it("computes company cash as the sum of the bank rows (incl. vault cash), ignoring BANK TOTAL", () => {
+    const model = buildReportModel(
+      baseData({
+        banks: [
+          { label: "Dah Sing", amount: 28969 },
+          { label: "HSBC", amount: 1376304.36 },
+          { label: "CASH", amount: 90738.4 },
+        ],
+        bankTotal: 1,
+      }),
+      new Date(2026, 7, 6),
+    );
+    expect(model.companyCashTotal).toBeCloseTo(1496011.76, 5);
+  });
+
+  it("maps and totals separate accounts", () => {
+    const model = buildReportModel(
+      baseData({ separateAccounts: [{ label: "Fubon", amount: 2000000 }] }),
+      new Date(2026, 7, 6),
+    );
+    expect(model.separateAccounts).toEqual([{ label: "富邦", amount: 2000000 }]);
+    expect(model.separateAccountsTotal).toBe(2000000);
+  });
+
+  it("leaves totals null when their section has no rows", () => {
+    const model = buildReportModel(baseData(), new Date(2026, 7, 6));
     expect(model.companyCashTotal).toBeNull();
+    expect(model.separateAccountsTotal).toBeNull();
   });
 
   it("reorders shop sales into the canonical display order regardless of input order", () => {
@@ -108,20 +130,6 @@ describe("buildReportModel", () => {
   it("formats today's date header, independent of the ALL TOTAL value", () => {
     const model = buildReportModel(baseData({ allTotal: 999999 }), new Date(2026, 7, 10));
     expect(model.dateHeader).toBe("2026.08.10");
-  });
-
-  it("computes the grand total as separateAccountsTotal (KEI) + companyCashTotal, ignoring ALL TOTAL", () => {
-    const model = buildReportModel(
-      baseData({ kei: 2926052.12, amante: 372165.25, cashTotal: 47943, allTotal: 1 }),
-      new Date(2026, 7, 10),
-    );
-    expect(model.companyCashTotal).toBeCloseTo(420108.25, 5);
-    expect(model.grandTotal).toBeCloseTo(3346160.37, 5);
-  });
-
-  it("leaves the grand total null when either input is missing", () => {
-    const model = buildReportModel(baseData({ kei: null, amante: 1, cashTotal: 1 }), new Date(2026, 7, 10));
-    expect(model.grandTotal).toBeNull();
   });
 
   it("uses only yesterday's date for cigar sales on a non-Monday", () => {

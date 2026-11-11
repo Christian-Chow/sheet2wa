@@ -27,10 +27,7 @@ export function parseSheet(raw: string): ParseResult {
   const data: ParsedSheetData = {
     banks: [],
     bankTotal: null,
-    cashTotal: null,
-    amante: null,
-    kei: null,
-    extraAccounts: [],
+    separateAccounts: [],
     allTotal: null,
     shopSales: [],
     teamSales: [],
@@ -48,17 +45,13 @@ export function parseSheet(raw: string): ParseResult {
     const key = normalizeLabel(label);
     if (!key) continue;
 
-    if (key === "BANK") {
+    if (key === "BANK" || key === "AMANTE BANK") {
       section = "BANK";
       continue;
     }
     if (key === "BANK TOTAL") {
       data.bankTotal = parseNumber(cells[1]);
       section = "NONE";
-      continue;
-    }
-    if (key === "CASH TOTAL") {
-      data.cashTotal = parseNumber(cells[1]);
       continue;
     }
     if (key === "SEPARATE ACCOUNTS") {
@@ -115,12 +108,9 @@ export function parseSheet(raw: string): ParseResult {
       case "BANK":
         data.banks.push(row);
         break;
-      case "SEPARATE_ACCOUNTS": {
-        if (key === "AMANTE") data.amante = amount;
-        else if (key === "KEI") data.kei = amount;
-        else data.extraAccounts.push(row);
+      case "SEPARATE_ACCOUNTS":
+        data.separateAccounts.push(row);
         break;
-      }
       case "SHOP_SALES":
         data.shopSales.push(row);
         break;

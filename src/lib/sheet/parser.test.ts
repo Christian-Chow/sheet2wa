@@ -2,19 +2,16 @@ import { describe, expect, it } from "vitest";
 import { parseSheet } from "./parser";
 
 const EXAMPLE_INPUT = [
-  "BANK",
-  "Dah Sing\t30,059.00",
-  "HSBC\t3,717,224.72",
-  "Fubon\t24,348.68",
-  "BANK TOTAL\t3,771,632.40",
-  "",
-  "CASH TOTAL\t4,073.00",
+  "AMANTE BANK",
+  "Dah Sing\t28,969.00",
+  "HSBC\t1,376,304.36",
+  "CASH \t90,738.40",
+  "BANK TOTAL\t1,496,011.76",
   "",
   "SEPARATE ACCOUNTS",
-  "AMANTE\t845,580.28",
-  "KEI\t2,926,052.12",
+  "Fubon\t2,000,000.00",
   "",
-  "ALL TOTAL\t3,775,705.40",
+  "ALL TOTAL\t3,496,011.76",
   "",
   "SHOP SALES",
   "HQ\t0.00",
@@ -53,16 +50,13 @@ describe("parseSheet", () => {
     if (!result.ok) return;
 
     expect(result.data.banks).toEqual([
-      { label: "Dah Sing", amount: 30059 },
-      { label: "HSBC", amount: 3717224.72 },
-      { label: "Fubon", amount: 24348.68 },
+      { label: "Dah Sing", amount: 28969 },
+      { label: "HSBC", amount: 1376304.36 },
+      { label: "CASH", amount: 90738.4 },
     ]);
-    expect(result.data.bankTotal).toBe(3771632.4);
-    expect(result.data.cashTotal).toBe(4073);
-    expect(result.data.amante).toBe(845580.28);
-    expect(result.data.kei).toBe(2926052.12);
-    expect(result.data.extraAccounts).toEqual([]);
-    expect(result.data.allTotal).toBe(3775705.4);
+    expect(result.data.bankTotal).toBe(1496011.76);
+    expect(result.data.separateAccounts).toEqual([{ label: "Fubon", amount: 2000000 }]);
+    expect(result.data.allTotal).toBe(3496011.76);
     expect(result.data.shopSales).toHaveLength(8);
     expect(result.data.shopSales[0]).toEqual({ label: "HQ", amount: 0 });
     expect(result.data.teamSales).toHaveLength(5);
@@ -74,27 +68,11 @@ describe("parseSheet", () => {
     expect(result.data.salesTotal).toBe(1734558);
   });
 
-  it("captures extra rows under SEPARATE ACCOUNTS beyond AMANTE/KEI as optional accounts", () => {
-    const input = [
-      "SEPARATE ACCOUNTS",
-      "AMANTE\t845,580.28",
-      "KEI\t2,926,052.12",
-      "交通\t2,996.69",
-      "螞蟻\t615.3",
-      "上海商業\t5,000",
-      "",
-      "SHOP SALES",
-      "HQ\t100",
-    ].join("\n");
-
-    const result = parseSheet(input);
+  it("still accepts a plain BANK heading", () => {
+    const result = parseSheet(["BANK", "HSBC\t100"].join("\n"));
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.data.extraAccounts).toEqual([
-      { label: "交通", amount: 2996.69 },
-      { label: "螞蟻", amount: 615.3 },
-      { label: "上海商業", amount: 5000 },
-    ]);
+    expect(result.data.banks).toEqual([{ label: "HSBC", amount: 100 }]);
   });
 
   it("detects team rows by their TEAM suffix even without an explicit TEAM SALES heading", () => {

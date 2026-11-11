@@ -5,47 +5,76 @@ import { COMPANY_NAME } from "./rules";
 import type { ReportModel } from "./types";
 import { formatCurrency, formatPercent } from "./utils";
 
-const SEPARATOR = "____________";
-const CIGAR_SECTION_DIVIDER = "-----------雪茄銷售---------";
+const SEPARATOR = "____________________";
 
-/** Recurring misc accounts that always need a human to check and fill in by hand
- * before sending, regardless of what the sheet contains. */
-const FIXED_EXTRA_ACCOUNT_LABELS = ["交通", "螞蟻", "上海商業"];
-
-function formatBankBlock(model: ReportModel): string[] {
-  return model.banks.map((bank, i) => `${i + 1}) ${bank.label} : ${formatCurrency(bank.amount)}`);
+/** WhatsApp renders *text* as bold. */
+function bold(text: string): string {
+  return `*${text}*`;
 }
 
-function formatCompanyCashBlock(model: ReportModel): string[] | null {
-  if (model.companyCashTotal === null) return null;
+/** Recurring other-company accounts that always need a human to check and fill
+ * in by hand before sending, regardless of what the sheet contains. */
+const OTHER_COMPANY_ACCOUNT_LABELS = ["交通", "螞蟻", "上海商業"];
+
+/** Not on the sheet — left blank for manual entry before sending. */
+const PACIFIC_CIGAR_UNCLEARED_CHEQUES_LINE = "[太平洋雪茄尚未扣帳支票總共 : ]";
+
+function numberedLines(lines: { label: string; amount: number | null }[], startIndex: number): string[] {
+  return lines.map(
+    ({ label, amount }, i) => `${startIndex + i}) ${label} : ${amount !== null ? formatCurrency(amount) : ""}`,
+  );
+}
+
+function formatCompanyBlock(model: ReportModel): string[] | null {
+  if (model.banks.length === 0) return null;
   return [
-    `總港幣現金在戶口屬公司 : ${formatCurrency(model.companyCashInAccounts as number)}`,
-    `總港幣現金在保險庫共 : ${formatCurrency(model.cashInVault as number)}`,
-    `總港幣屬公司共 : ${formatCurrency(model.companyCashTotal)}`,
+    ...numberedLines(model.banks, 1),
+    bold(`總港幣屬公司共 : ${formatCurrency(model.companyCashTotal as number)}`),
+    PACIFIC_CIGAR_UNCLEARED_CHEQUES_LINE,
   ];
 }
 
 function formatSeparateAccountsBlock(model: ReportModel): string[] | null {
-  if (model.separateAccountsTotal === null) return null;
-  return [`分隔戶口 : ${formatCurrency(model.separateAccountsTotal)}`];
+  if (model.separateAccounts.length === 0) return null;
+  return [
+    "分隔戶口",
+    ...numberedLines(model.separateAccounts, model.banks.length + 1),
+    bold(`總港幣屬分隔戶口共 : ${formatCurrency(model.separateAccountsTotal as number)}`),
+  ];
 }
 
-function formatGrandTotalBlock(model: ReportModel): string[] | null {
-  if (model.grandTotal === null) return null;
-  return [`總港幣共 : ${formatCurrency(model.grandTotal)}`];
+function formatOtherCompanyAccountsBlock(model: ReportModel): string[] | null {
+  if (model.banks.length === 0 && model.separateAccounts.length === 0) return null;
+  return [
+    "其他公司戶口",
+    ...numberedLines(
+      OTHER_COMPANY_ACCOUNT_LABELS.map((label) => ({ label, amount: null })),
+      model.banks.length + model.separateAccounts.length + 1,
+    ),
+  ];
 }
 
-function formatFixedExtraAccountsBlock(model: ReportModel): string[] | null {
-  if (model.grandTotal === null) return null;
-  const startIndex = model.banks.length + 1;
-  return FIXED_EXTRA_ACCOUNT_LABELS.map((label, i) => `${startIndex + i}) ${label} : `);
+/** Header + accounts, printed as one run of lines with SEPARATOR between sections. */
+function formatAccountsSection(model: ReportModel): string {
+  const sections = [
+    formatCompanyBlock(model),
+    formatSeparateAccountsBlock(model),
+    formatOtherCompanyAccountsBlock(model),
+  ].filter((block): block is string[] => block !== null);
+
+  const lines = [model.dateHeader, bold(COMPANY_NAME)];
+  sections.forEach((block, i) => {
+    if (i > 0) lines.push(SEPARATOR);
+    lines.push(...block);
+  });
+  return lines.join("\n");
 }
 
 function formatShopSalesBlock(model: ReportModel): string[] | null {
   if (model.shopSales.length === 0) return null;
   return [
-    `${model.month}月份業績`,
-    CIGAR_SECTION_DIVIDER,
+    bold("雪茄銷售業績"),
+    `${model.month}月份`,
     ...model.shopSales.map((shop) => `${shop.label} : ${formatCurrency(shop.amount)}`),
   ];
 }
@@ -68,31 +97,22 @@ function formatTotalsBlock(model: ReportModel): string[] | null {
     });
   }
   if (model.monthSalesTotal !== null) {
-    lines.push(`${model.month}月份所有銷售總數 : ${formatCurrency(model.monthSalesTotal)}`);
+    lines.push(bold(`${model.month}月份所有銷售總數 : ${formatCurrency(model.monthSalesTotal)}`));
   }
   return lines.length > 0 ? lines : null;
 }
 
 export function formatWhatsAppMessage(model: ReportModel): string {
-  const blocks: string[][] = [[model.dateHeader, COMPANY_NAME]];
-
-  for (const block of [
-    formatBankBlock(model),
-    formatCompanyCashBlock(model),
-    formatSeparateAccountsBlock(model),
-    formatGrandTotalBlock(model),
-    formatFixedExtraAccountsBlock(model),
-  ]) {
-    if (block && block.length > 0) blocks.push(block);
-  }
-
   const salesBlocks = [formatShopSalesBlock(model), formatTeamSalesBlock(model), formatTotalsBlock(model)].filter(
     (block): block is string[] => block !== null && block.length > 0,
   );
 
-  if (salesBlocks.length > 0) {
-    blocks.push([SEPARATOR], ...salesBlocks);
-  }
+  // The separator sits tight between the accounts and the first sales block (no blank lines);
+  // the remaining sales blocks are spaced apart by blank lines.
+  const [firstSales, ...restSales] = salesBlocks;
+  const blocks: string[][] = firstSales
+    ? [[formatAccountsSection(model), SEPARATOR, ...firstSales], ...restSales]
+    : [[formatAccountsSection(model)]];
 
   return blocks.map((block) => block.join("\n")).join("\n\n");
 }

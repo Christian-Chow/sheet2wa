@@ -2,77 +2,90 @@ import { describe, expect, it } from "vitest";
 import { generateWhatsAppMessage } from "./index";
 
 const EXAMPLE_INPUT = [
-  "BANK",
-  "Dah Sing\t30,059.00",
-  "HSBC\t3,717,224.72",
-  "Fubon\t24,348.68",
-  "BANK TOTAL\t3,771,632.40",
-  "",
-  "CASH TOTAL\t4,073.00",
-  "",
-  "SEPARATE ACCOUNTS",
-  "AMANTE\t845,580.28",
-  "KEI\t2,926,052.12",
-  "",
-  "ALL TOTAL\t3,775,705.40",
-  "",
-  "SHOP SALES",
-  "HQ\t0.00",
-  "PP\t242,379.00",
-  "EMS\t291,596.00",
-  "OC\t454,738.00",
-  "K11\t477,816.00",
-  "SS\t154,720.00",
-  "HW\t97,614.00",
-  "HWH\t15,695.00",
-  "",
-  "HQ TEAM\t0.00\t0.00000%",
-  "OSCAR TEAM\t533,975.00\t30.78450%",
-  "VINCENT TEAM\t932,554.00\t53.76321%",
-  "JONATHAN TEAM\t268,029.00\t15.45229%",
-  "",
-  "SALES TOTAL\t1,734,558.00",
+  "AMANTE BANK\t",
+  "Dah Sing\t28,969.00",
+  "HSBC\t1,376,304.36",
+  "CASH \t90,738.40",
+  "BANK TOTAL\t1,496,011.76",
+  "\t",
+  "\t",
+  "\t",
+  "SEPARATE ACCOUNTS\t",
+  "Fubon\t2,000,000.00",
+  "\t",
+  "\t",
+  "ALL TOTAL\t3,496,011.76",
+  "\t",
+  "SHOP SALES\t",
+  "HQ\t109,440.00",
+  "PP\t302,674.00",
+  "EMS\t508,489.00",
+  "OC\t536,063.00",
+  "K11\t598,733.00",
+  "SS\t180,091.00",
+  "HW\t133,603.00",
+  "HWH\t45,467.00",
+  "\t",
+  "HQ TEAM\t109,440.00",
+  "OSCAR TEAM\t811,163.00",
+  "VINCENT TEAM\t1,134,796.00",
+  "JONATHAN TEAM\t359,161.00",
+  "\t",
+  "\t",
+  "Friday Total Sales\t",
+  "Saturday Total Sales\t",
+  "Sunday Total Sales\t",
+  "Previous Day Total Sales\t242,570.00",
+  "\t",
+  "SALES TOTAL\t2,414,560.00",
 ].join("\n");
 
 // 2026-08-06 is a Thursday, so cigar sales fall back to a single "yesterday" line.
 const THURSDAY = new Date(2026, 7, 6);
 
+const ACCOUNTS_SECTION = [
+  "2026.08.06",
+  "*愛德集團*",
+  "1) 大新 : $28,969",
+  "2) 匯豐 : $1,376,304.36",
+  "3) 保險庫 (現金) : $90,738.4",
+  "*總港幣屬公司共 : $1,496,011.76*",
+  "[太平洋雪茄尚未扣帳支票總共 : ]",
+  "____________________",
+  "分隔戶口",
+  "4) 富邦 : $2,000,000",
+  "*總港幣屬分隔戶口共 : $2,000,000*",
+  "____________________",
+  "其他公司戶口",
+  "5) 交通 : ",
+  "6) 螞蟻 : ",
+  "7) 上海商業 : ",
+].join("\n");
+
 const EXPECTED_MESSAGE = [
-  "2026.08.06\n愛德集團",
-  "",
-  "1) 大新 : $30,059\n2) 匯豐 : $3,717,224.72\n3) 富邦 : $24,348.68",
-  "",
-  "總港幣現金在戶口屬公司 : $845,580.28\n總港幣現金在保險庫共 : $4,073\n總港幣屬公司共 : $849,653.28",
-  "",
-  "分隔戶口 : $2,926,052.12",
-  "",
-  "總港幣共 : $3,775,705.4",
-  "",
-  "4) 交通 : \n5) 螞蟻 : \n6) 上海商業 : ",
-  "",
-  "____________",
-  "",
+  ACCOUNTS_SECTION,
+  "____________________",
   [
-    "8月份業績",
-    "-----------雪茄銷售---------",
-    "總部 : $0",
-    "太古廣場 : $242,379",
-    "圓方 : $291,596",
-    "海港城 : $454,738",
-    "K11M : $477,816",
-    "港島南岸 : $154,720",
-    "合和 : $97,614",
-    "合和酒店 : $15,695",
+    "*雪茄銷售業績*",
+    "8月份",
+    "總部 : $109,440",
+    "太古廣場 : $302,674",
+    "圓方 : $508,489",
+    "海港城 : $536,063",
+    "K11M : $598,733",
+    "港島南岸 : $180,091",
+    "合和 : $133,603",
+    "合和酒店 : $45,467",
   ].join("\n"),
   "",
   [
-    "總部 : $0 (0%)",
-    "奧斯卡團隊 : $533,975 (30.78%)",
-    "溫信團隊 : $932,554 (53.76%)",
-    "港島南岸+合和中心+合和酒店 : $268,029 (15.45%)",
+    "總部 : $109,440 (4.53%)",
+    "奧斯卡團隊 : $811,163 (33.59%)",
+    "溫信團隊 : $1,134,796 (46.99%)",
+    "港島南岸+合和中心+合和酒店 : $359,161 (14.87%)",
   ].join("\n"),
   "",
-  "[8月5號雪茄總業績 : ]\n8月份所有銷售總數 : $1,734,558",
+  "[8月5號雪茄總業績 : $242,570]\n*8月份所有銷售總數 : $2,414,560*",
 ].join("\n");
 
 describe("generateWhatsAppMessage", () => {
@@ -81,7 +94,7 @@ describe("generateWhatsAppMessage", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.message).toBe(EXPECTED_MESSAGE);
-    expect(result.rowCount).toBe(3 + 8 + 4 + 1 + 1); // banks + shop + team + amante + kei
+    expect(result.rowCount).toBe(3 + 1 + 8 + 4); // banks (incl. cash) + separate accounts + shop + team
   });
 
   it("changes the date header, month/day labels, and grand total when a different date is passed in", () => {
@@ -89,10 +102,9 @@ describe("generateWhatsAppMessage", () => {
     const result = generateWhatsAppMessage(EXAMPLE_INPUT, new Date(2026, 2, 21));
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.message).toContain("2026.03.21\n愛德集團");
-    expect(result.message).toContain("3月份業績");
-    expect(result.message).toContain("[3月20號雪茄總業績 : ]");
-    expect(result.message).toContain("總港幣共 : $3,775,705.4");
+    expect(result.message).toContain("2026.03.21\n*愛德集團*");
+    expect(result.message).toContain("*雪茄銷售業績*\n3月份\n");
+    expect(result.message).toContain("[3月20號雪茄總業績 : $242,570]");
   });
 
   it("lists last Friday, last Saturday, and yesterday's cigar sales when today is Monday", () => {
@@ -101,42 +113,51 @@ describe("generateWhatsAppMessage", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.message).toContain(
-      "[8月7號雪茄總業績 : ]\n[8月8號雪茄總業績 : ]\n[8月9號雪茄總業績 : ]\n8月份所有銷售總數 : $1,734,558",
+      "[8月7號雪茄總業績 : ]\n[8月8號雪茄總業績 : ]\n[8月9號雪茄總業績 : ]\n*8月份所有銷售總數 : $2,414,560*",
     );
   });
 
-  it("always lists the fixed misc accounts below 總港幣共, blank for manual filling, regardless of sheet content", () => {
-    const result = generateWhatsAppMessage(EXAMPLE_INPUT, THURSDAY);
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.message).toContain("總港幣共 : $3,775,705.4\n\n4) 交通 : \n5) 螞蟻 : \n6) 上海商業 : ");
-
-    // Even if the sheet happens to carry rows with these exact labels, the fixed
-    // block still wins: their amounts are never parsed into it.
-    const input = EXAMPLE_INPUT.replace(
-      "KEI\t2,926,052.12",
-      ["KEI\t2,926,052.12", "交通\t2,996.69", "螞蟻\t615.3", "上海商業\t5,000"].join("\n"),
-    );
-    const result2 = generateWhatsAppMessage(input, THURSDAY);
-    expect(result2.ok).toBe(true);
-    if (!result2.ok) return;
-    expect(result2.message).toContain("4) 交通 : \n5) 螞蟻 : \n6) 上海商業 : ");
-  });
-
-  it("omits the fixed misc-accounts block when there's no grand total to anchor it to", () => {
-    const input = ["BANK", "Dah Sing\t30,059.00"].join("\n");
+  it("always lists the 其他公司戶口 accounts blank for manual filling, regardless of sheet content", () => {
+    // Even if the sheet happens to carry rows with these labels, their amounts are
+    // never parsed into the fixed block (they'd show as extra separate accounts instead).
+    const input = EXAMPLE_INPUT.replace("Fubon\t2,000,000.00", "Fubon\t2,000,000.00\n交通\t2,996.69");
     const result = generateWhatsAppMessage(input, THURSDAY);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
+    expect(result.message).toContain(
+      "5) 交通 : $2,996.69\n*總港幣屬分隔戶口共 : $2,002,996.69*\n____________________\n其他公司戶口\n6) 交通 : \n7) 螞蟻 : \n8) 上海商業 : ",
+    );
+  });
+
+  it("numbers separate and other accounts straight after the banks when a section is missing", () => {
+    const input = ["AMANTE BANK", "Dah Sing\t30,059.00", "CASH\t4,073.00", "BANK TOTAL\t34,132.00"].join("\n");
+    const result = generateWhatsAppMessage(input, THURSDAY);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.message).toBe(
+      [
+        "2026.08.06",
+        "*愛德集團*",
+        "1) 大新 : $30,059",
+        "2) 保險庫 (現金) : $4,073",
+        "*總港幣屬公司共 : $34,132*",
+        "[太平洋雪茄尚未扣帳支票總共 : ]",
+        "____________________",
+        "其他公司戶口",
+        "3) 交通 : ",
+        "4) 螞蟻 : ",
+        "5) 上海商業 : ",
+      ].join("\n"),
+    );
+  });
+
+  it("omits the accounts sections entirely when there are no bank or separate-account rows", () => {
+    const input = ["SHOP SALES", "HQ\t100"].join("\n");
+    const result = generateWhatsAppMessage(input, THURSDAY);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.message.startsWith("2026.08.06\n*愛德集團*\n____________________\n*雪茄銷售業績*\n8月份\n")).toBe(true);
     expect(result.message).not.toContain("交通");
-  });
-
-  it("omits blocks whose underlying data is missing instead of crashing", () => {
-    const input = ["BANK", "Dah Sing\t30,059.00"].join("\n");
-    const result = generateWhatsAppMessage(input, THURSDAY);
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
-    expect(result.message).toBe("2026.08.06\n愛德集團\n\n1) 大新 : $30,059");
   });
 
   it("returns a validation error for empty input", () => {

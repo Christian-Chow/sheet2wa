@@ -11,6 +11,7 @@ export const BANK_NAME_MAP: Record<string, string> = {
   "Dah Sing": "大新",
   HSBC: "匯豐",
   Fubon: "富邦",
+  CASH: "保險庫 (現金)",
 };
 
 export const SHOP_NAME_MAP: Record<string, string> = {
@@ -71,17 +72,10 @@ function sum(items: { amount: number }[]): number {
   return items.reduce((total, item) => total + item.amount, 0);
 }
 
-/** Company cash = the AMANTE separate account + the cash-in-vault total. */
-function computeCompanyCashTotal(amante: number | null, cashTotal: number | null): number | null {
-  if (amante === null || cashTotal === null) return null;
-  return amante + cashTotal;
-}
-
-/** 總港幣共 = 分隔戶口 (KEI) + 總港幣屬公司共. Computed from our own parts, never from
- * the sheet's ALL TOTAL — that value is only useful as an optional external check. */
-function computeGrandTotal(separateAccountsTotal: number | null, companyCashTotal: number | null): number | null {
-  if (separateAccountsTotal === null || companyCashTotal === null) return null;
-  return separateAccountsTotal + companyCashTotal;
+/** Totals are computed from the listed rows rather than read from the sheet's
+ * BANK TOTAL / ALL TOTAL cells, so the message always agrees with its own lines. */
+function sumOrNull(items: { amount: number }[]): number | null {
+  return items.length > 0 ? sum(items) : null;
 }
 
 function toReportDate(date: Date): ReportDate {
@@ -146,6 +140,7 @@ function buildReportLines(rows: AmountRow[], map: Record<string, string>): Repor
 
 export function buildReportModel(data: ParsedSheetData, today: Date): ReportModel {
   const banks = buildReportLines(data.banks, BANK_NAME_MAP);
+  const separateAccounts = buildReportLines(data.separateAccounts, BANK_NAME_MAP);
   const shopSales = buildReportLines(reorderByCanonical(data.shopSales, SHOP_DISPLAY_ORDER), SHOP_NAME_MAP);
   const teamSales = buildTeamReportLines(data.teamSales);
 
@@ -153,16 +148,12 @@ export function buildReportModel(data: ParsedSheetData, today: Date): ReportMode
   const monthSalesTotal =
     data.salesTotal ?? (teamSales.length > 0 ? sum(teamSales) : cigarSalesTotal);
 
-  const companyCashTotal = computeCompanyCashTotal(data.amante, data.cashTotal);
-
   return {
     dateHeader: formatDateHeader(today),
     banks,
-    companyCashInAccounts: data.amante,
-    cashInVault: data.cashTotal,
-    companyCashTotal,
-    separateAccountsTotal: data.kei,
-    grandTotal: computeGrandTotal(data.kei, companyCashTotal),
+    companyCashTotal: sumOrNull(banks),
+    separateAccounts,
+    separateAccountsTotal: sumOrNull(separateAccounts),
     shopSales,
     teamSales,
     cigarSalesTotal,
