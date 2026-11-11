@@ -2,10 +2,11 @@
 // their labels (not fixed row numbers) so it keeps working if rows are inserted,
 // reordered, or a section is missing entirely.
 
+import { isOtherCompanyAccountLabel } from "./rules";
 import { normalizeLabel, parseNumber, splitRow } from "./utils";
 import type { AmountRow, ParsedSheetData, ParseResult } from "./types";
 
-type Section = "NONE" | "BANK" | "SEPARATE_ACCOUNTS" | "SHOP_SALES" | "TEAM_SALES";
+type Section = "NONE" | "BANK" | "SEPARATE_ACCOUNTS" | "OTHER_COMPANY_ACCOUNTS" | "SHOP_SALES" | "TEAM_SALES";
 
 /** Team rows (e.g. "OSCAR TEAM") are recognized by label rather than a required heading,
  * since real sheets don't always include an explicit "TEAM SALES" section row. */
@@ -28,6 +29,8 @@ export function parseSheet(raw: string): ParseResult {
     banks: [],
     bankTotal: null,
     separateAccounts: [],
+    otherCompanyAccounts: [],
+    pccCheque: null,
     allTotal: null,
     shopSales: [],
     teamSales: [],
@@ -54,8 +57,16 @@ export function parseSheet(raw: string): ParseResult {
       section = "NONE";
       continue;
     }
+    if (key === "PCC CHEQUE") {
+      data.pccCheque = parseNumber(cells[1]);
+      continue;
+    }
     if (key === "SEPARATE ACCOUNTS") {
       section = "SEPARATE_ACCOUNTS";
+      continue;
+    }
+    if (key === "OTHER COMPANY ACCOUNTS") {
+      section = "OTHER_COMPANY_ACCOUNTS";
       continue;
     }
     if (key === "ALL TOTAL") {
@@ -103,6 +114,13 @@ export function parseSheet(raw: string): ParseResult {
     const amount = parseNumber(cells[1]);
     if (amount === null) continue;
     const row: AmountRow = { label, amount };
+
+    // Fallback for sheets without the OTHER COMPANY ACCOUNTS heading, where these
+    // rows sit under SEPARATE ACCOUNTS: pick the known ones out by label.
+    if (section === "OTHER_COMPANY_ACCOUNTS" || isOtherCompanyAccountLabel(label)) {
+      data.otherCompanyAccounts.push(row);
+      continue;
+    }
 
     switch (section) {
       case "BANK":

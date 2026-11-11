@@ -7,6 +7,8 @@ function baseData(overrides: Partial<ParsedSheetData> = {}): ParsedSheetData {
     banks: [],
     bankTotal: null,
     separateAccounts: [],
+    otherCompanyAccounts: [],
+    pccCheque: null,
     allTotal: null,
     shopSales: [],
     teamSales: [],
@@ -58,6 +60,23 @@ describe("buildReportModel", () => {
     );
     expect(model.separateAccounts).toEqual([{ label: "富邦", amount: 2000000 }]);
     expect(model.separateAccountsTotal).toBe(2000000);
+  });
+
+  it("lists every other-company account in fixed order, null where the sheet has no value", () => {
+    const model = buildReportModel(
+      baseData({
+        otherCompanyAccounts: [
+          { label: "Shanghai Commercial Bank", amount: 5000 },
+          { label: "Bank of Communication", amount: 2996.69 },
+        ],
+      }),
+      new Date(2026, 7, 6),
+    );
+    expect(model.otherCompanyAccounts).toEqual([
+      { label: "交通", amount: 2996.69 },
+      { label: "螞蟻", amount: null },
+      { label: "上海商業", amount: 5000 },
+    ]);
   });
 
   it("leaves totals null when their section has no rows", () => {

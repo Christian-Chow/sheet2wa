@@ -14,6 +14,19 @@ export const BANK_NAME_MAP: Record<string, string> = {
   CASH: "保險庫 (現金)",
 };
 
+/** Other-company accounts, always printed under 其他公司戶口 in this order. Matched by
+ * label wherever they appear in the sheet (they sit under SEPARATE ACCOUNTS without a heading). */
+export const OTHER_COMPANY_ACCOUNT_NAME_MAP: Record<string, string> = {
+  "Bank of Communication": "交通",
+  "Ant Bank": "螞蟻",
+  "Shanghai Commercial Bank": "上海商業",
+};
+
+export function isOtherCompanyAccountLabel(label: string): boolean {
+  const key = label.trim().toUpperCase();
+  return Object.keys(OTHER_COMPANY_ACCOUNT_NAME_MAP).some((k) => k.toUpperCase() === key);
+}
+
 export const SHOP_NAME_MAP: Record<string, string> = {
   HQ: "總部",
   PP: "太古廣場",
@@ -76,6 +89,19 @@ function sum(items: { amount: number }[]): number {
  * BANK TOTAL / ALL TOTAL cells, so the message always agrees with its own lines. */
 function sumOrNull(items: { amount: number }[]): number | null {
   return items.length > 0 ? sum(items) : null;
+}
+
+/** Every fixed account in fixed order, with its sheet amount or null (blank for manual
+ * entry), followed by any other rows from the OTHER COMPANY ACCOUNTS section in sheet order. */
+function buildOtherCompanyAccounts(rows: AmountRow[]): { label: string; amount: number | null }[] {
+  const fixed = Object.entries(OTHER_COMPANY_ACCOUNT_NAME_MAP).map(([sheetLabel, label]) => {
+    const row = rows.find((r) => r.label.trim().toUpperCase() === sheetLabel.toUpperCase());
+    return { label, amount: row ? row.amount : null };
+  });
+  const extras = rows
+    .filter((r) => !isOtherCompanyAccountLabel(r.label))
+    .map((r) => ({ label: r.label, amount: r.amount }));
+  return [...fixed, ...extras];
 }
 
 function toReportDate(date: Date): ReportDate {
@@ -154,6 +180,8 @@ export function buildReportModel(data: ParsedSheetData, today: Date): ReportMode
     companyCashTotal: sumOrNull(banks),
     separateAccounts,
     separateAccountsTotal: sumOrNull(separateAccounts),
+    otherCompanyAccounts: buildOtherCompanyAccounts(data.otherCompanyAccounts),
+    pccCheque: data.pccCheque,
     shopSales,
     teamSales,
     cigarSalesTotal,

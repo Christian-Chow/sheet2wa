@@ -7,14 +7,15 @@ const EXAMPLE_INPUT = [
   "HSBC\t1,376,304.36",
   "CASH \t90,738.40",
   "BANK TOTAL\t1,496,011.76",
-  "\t",
-  "\t",
+  "PCC Cheque\t1,392,681.39",
   "\t",
   "SEPARATE ACCOUNTS\t",
   "Fubon\t2,000,000.00",
   "\t",
-  "\t",
-  "ALL TOTAL\t3,496,011.76",
+  "OTHER COMPANY ACCOUNTS\t",
+  "Bank of Communication\t2,996.69",
+  "Ant Bank\t615.30",
+  "Shanghai Commercial Bank\t5,000.00",
   "\t",
   "SHOP SALES\t",
   "HQ\t109,440.00",
@@ -50,16 +51,16 @@ const ACCOUNTS_SECTION = [
   "2) 匯豐 : $1,376,304.36",
   "3) 保險庫 (現金) : $90,738.4",
   "*總港幣屬公司共 : $1,496,011.76*",
-  "[太平洋雪茄尚未扣帳支票總共 : ]",
+  "[太平洋雪茄尚未扣帳支票總共 : $1,392,681.39]",
   "____________________",
   "分隔戶口",
   "4) 富邦 : $2,000,000",
   "*總港幣屬分隔戶口共 : $2,000,000*",
   "____________________",
   "其他公司戶口",
-  "5) 交通 : ",
-  "6) 螞蟻 : ",
-  "7) 上海商業 : ",
+  "5) 交通 : $2,996.69",
+  "6) 螞蟻 : $615.3",
+  "7) 上海商業 : $5,000",
 ].join("\n");
 
 const EXPECTED_MESSAGE = [
@@ -94,7 +95,7 @@ describe("generateWhatsAppMessage", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.message).toBe(EXPECTED_MESSAGE);
-    expect(result.rowCount).toBe(3 + 1 + 8 + 4); // banks (incl. cash) + separate accounts + shop + team
+    expect(result.rowCount).toBe(3 + 1 + 1 + 3 + 8 + 4); // banks (incl. cash) + PCC cheque + separate + other company + shop + team
   });
 
   it("changes the date header, month/day labels, and grand total when a different date is passed in", () => {
@@ -117,16 +118,34 @@ describe("generateWhatsAppMessage", () => {
     );
   });
 
-  it("always lists the 其他公司戶口 accounts blank for manual filling, regardless of sheet content", () => {
-    // Even if the sheet happens to carry rows with these labels, their amounts are
-    // never parsed into the fixed block (they'd show as extra separate accounts instead).
-    const input = EXAMPLE_INPUT.replace("Fubon\t2,000,000.00", "Fubon\t2,000,000.00\n交通\t2,996.69");
+  it("leaves an other-company account or the PCC cheque blank when the sheet has no value for it", () => {
+    const input = EXAMPLE_INPUT.replace("PCC Cheque\t1,392,681.39", "PCC Cheque\t").replace("Ant Bank\t615.30", "Ant Bank\t");
     const result = generateWhatsAppMessage(input, THURSDAY);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.message).toContain(
-      "5) 交通 : $2,996.69\n*總港幣屬分隔戶口共 : $2,002,996.69*\n____________________\n其他公司戶口\n6) 交通 : \n7) 螞蟻 : \n8) 上海商業 : ",
+    expect(result.message).toContain("[太平洋雪茄尚未扣帳支票總共 : ]");
+    expect(result.message).toContain("其他公司戶口\n5) 交通 : $2,996.69\n6) 螞蟻 : \n7) 上海商業 : $5,000");
+  });
+
+  it("still picks out the known other-company accounts when the OTHER COMPANY ACCOUNTS heading is missing", () => {
+    const input = EXAMPLE_INPUT.replace("OTHER COMPANY ACCOUNTS\t\n", "");
+    const result = generateWhatsAppMessage(input, THURSDAY);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.message).toContain("分隔戶口\n4) 富邦 : $2,000,000\n*總港幣屬分隔戶口共 : $2,000,000*");
+    expect(result.message).toContain("其他公司戶口\n5) 交通 : $2,996.69\n6) 螞蟻 : $615.3\n7) 上海商業 : $5,000");
+  });
+
+  it("appends unknown rows under OTHER COMPANY ACCOUNTS after the fixed accounts", () => {
+    const input = EXAMPLE_INPUT.replace(
+      "Shanghai Commercial Bank\t5,000.00",
+      "Shanghai Commercial Bank\t5,000.00\nNew Bank\t100.00",
     );
+    const result = generateWhatsAppMessage(input, THURSDAY);
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.message).toContain("7) 上海商業 : $5,000\n8) New Bank : $100\n____________________");
+    expect(result.message).toContain("*總港幣屬分隔戶口共 : $2,000,000*");
   });
 
   it("numbers separate and other accounts straight after the banks when a section is missing", () => {

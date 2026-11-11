@@ -19,6 +19,10 @@ export interface ParsedSheetData {
   bankTotal: number | null;
   /** Rows under SEPARATE ACCOUNTS (e.g. Fubon). */
   separateAccounts: AmountRow[];
+  /** Bank of Communication / Ant Bank / Shanghai Commercial Bank rows, picked out by label. */
+  otherCompanyAccounts: AmountRow[];
+  /** "PCC Cheque" row: 太平洋雪茄尚未扣帳支票總共. */
+  pccCheque: number | null;
   allTotal: number | null;
   shopSales: AmountRow[];
   teamSales: TeamRow[];
@@ -60,6 +64,9 @@ export interface ReportModel {
   separateAccounts: ReportLine[];
   /** 總港幣屬分隔戶口共 = sum of the separate accounts; null when there are none. */
   separateAccountsTotal: number | null;
+  /** Always the fixed accounts in fixed order; amount is null when the sheet has no value for it. */
+  otherCompanyAccounts: { label: string; amount: number | null }[];
+  pccCheque: number | null;
   shopSales: ReportLine[];
   teamSales: TeamReportLine[];
   cigarSalesTotal: number | null;

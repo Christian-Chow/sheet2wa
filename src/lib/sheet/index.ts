@@ -9,7 +9,9 @@ function countRecognizedRows(data: ParsedSheetData): number {
     data.banks.length +
     data.shopSales.length +
     data.teamSales.length +
-    data.separateAccounts.length
+    data.separateAccounts.length +
+    data.otherCompanyAccounts.length +
+    (data.pccCheque !== null ? 1 : 0)
   );
 }
 

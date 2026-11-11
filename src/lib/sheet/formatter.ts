@@ -12,16 +12,14 @@ function bold(text: string): string {
   return `*${text}*`;
 }
 
-/** Recurring other-company accounts that always need a human to check and fill
- * in by hand before sending, regardless of what the sheet contains. */
-const OTHER_COMPANY_ACCOUNT_LABELS = ["交通", "螞蟻", "上海商業"];
-
-/** Not on the sheet — left blank for manual entry before sending. */
-const PACIFIC_CIGAR_UNCLEARED_CHEQUES_LINE = "[太平洋雪茄尚未扣帳支票總共 : ]";
+/** Formats an amount, or leaves it blank for manual entry when the sheet has no value. */
+function amountOrBlank(amount: number | null): string {
+  return amount !== null ? formatCurrency(amount) : "";
+}
 
 function numberedLines(lines: { label: string; amount: number | null }[], startIndex: number): string[] {
   return lines.map(
-    ({ label, amount }, i) => `${startIndex + i}) ${label} : ${amount !== null ? formatCurrency(amount) : ""}`,
+    ({ label, amount }, i) => `${startIndex + i}) ${label} : ${amountOrBlank(amount)}`,
   );
 }
 
@@ -30,7 +28,7 @@ function formatCompanyBlock(model: ReportModel): string[] | null {
   return [
     ...numberedLines(model.banks, 1),
     bold(`總港幣屬公司共 : ${formatCurrency(model.companyCashTotal as number)}`),
-    PACIFIC_CIGAR_UNCLEARED_CHEQUES_LINE,
+    `[太平洋雪茄尚未扣帳支票總共 : ${amountOrBlank(model.pccCheque)}]`,
   ];
 }
 
@@ -44,11 +42,12 @@ function formatSeparateAccountsBlock(model: ReportModel): string[] | null {
 }
 
 function formatOtherCompanyAccountsBlock(model: ReportModel): string[] | null {
-  if (model.banks.length === 0 && model.separateAccounts.length === 0) return null;
+  const hasAnyAmount = model.otherCompanyAccounts.some((a) => a.amount !== null);
+  if (model.banks.length === 0 && model.separateAccounts.length === 0 && !hasAnyAmount) return null;
   return [
     "其他公司戶口",
     ...numberedLines(
-      OTHER_COMPANY_ACCOUNT_LABELS.map((label) => ({ label, amount: null })),
+      model.otherCompanyAccounts,
       model.banks.length + model.separateAccounts.length + 1,
     ),
   ];

@@ -7,11 +7,15 @@ const EXAMPLE_INPUT = [
   "HSBC\t1,376,304.36",
   "CASH \t90,738.40",
   "BANK TOTAL\t1,496,011.76",
+  "PCC Cheque\t1,392,681.39",
   "",
   "SEPARATE ACCOUNTS",
   "Fubon\t2,000,000.00",
   "",
-  "ALL TOTAL\t3,496,011.76",
+  "OTHER COMPANY ACCOUNTS",
+  "Bank of Communication\t2,996.69",
+  "Ant Bank\t615.30",
+  "Shanghai Commercial Bank\t5,000.00",
   "",
   "SHOP SALES",
   "HQ\t0.00",
@@ -55,8 +59,13 @@ describe("parseSheet", () => {
       { label: "CASH", amount: 90738.4 },
     ]);
     expect(result.data.bankTotal).toBe(1496011.76);
+    expect(result.data.pccCheque).toBe(1392681.39);
     expect(result.data.separateAccounts).toEqual([{ label: "Fubon", amount: 2000000 }]);
-    expect(result.data.allTotal).toBe(3496011.76);
+    expect(result.data.otherCompanyAccounts).toEqual([
+      { label: "Bank of Communication", amount: 2996.69 },
+      { label: "Ant Bank", amount: 615.3 },
+      { label: "Shanghai Commercial Bank", amount: 5000 },
+    ]);
     expect(result.data.shopSales).toHaveLength(8);
     expect(result.data.shopSales[0]).toEqual({ label: "HQ", amount: 0 });
     expect(result.data.teamSales).toHaveLength(5);
